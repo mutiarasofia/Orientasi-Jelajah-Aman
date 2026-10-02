@@ -1,4 +1,3 @@
-// src/app/(tabs)/index.tsx
 import { useState, useEffect, useRef } from "react";
 import { View, Text, ActivityIndicator, Button, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -59,7 +58,9 @@ export default function HalamanUtama() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 16, gap: 16 }}>
+    <SafeAreaView 
+      edges={["bottom", "left", "right"]}
+      style={{ flex: 1, padding: 16, gap: 16 }}>
       <SearchBox onCari={setTeksCari} />
 
       {hasilPencarian.map((kota) => (
@@ -81,22 +82,37 @@ export default function HalamanUtama() {
       )}
 
       {cuaca && kualitasUdara && kotaTerpilih && !sedangMemuat && (
-        <WeatherCard
-          kota={kotaTerpilih.name}
-          suhu={cuaca.saatIni.suhu}
-          tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
-          indeksAQI={kualitasUdara.indeksAQI}
-        />
+        <>
+          <WeatherCard
+            kota={kotaTerpilih.name}
+            suhu={cuaca.saatIni.suhu}
+            tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
+            indeksAQI={kualitasUdara.indeksAQI}
+          />
+
+          {/* NOMOR 1: Menampilkan Suhu Maksimal & Minimal Harian Hari Ini */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
+            <Text style={{ fontSize: 14 }}>
+              Suhu Maks: {cuaca.harian.suhuMaksimal[0]}°C
+            </Text>
+            <Text style={{ fontSize: 14 }}>
+              Suhu Min: {cuaca.harian.suhuMinimal[0]}°C
+            </Text>
+          </View>
+        </>
       )}
 
       {cuaca && (
         <Text style={{ fontSize: 12, color: "#888" }}>
-          Kondisi: {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} • Angin{" "}
-          {cuaca.saatIni.kecepatanAngin} km/j
+          Kondisi: {labelKodeCuaca(cuaca.saatIni.kodeCuaca)} | Angin: {cuaca.saatIni.kecepatanAngin} km/j
         </Text>
       )}
 
-      <AtribusiCuaca />
+      {/* NOMOR 2: Meneruskan prop PM2.5 dan PM10 ke AtribusiCuaca */}
+      <AtribusiCuaca 
+        pm25={kualitasUdara?.pm25} 
+        pm10={kualitasUdara?.pm10} 
+      />
     </SafeAreaView>
   );
 }
