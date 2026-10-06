@@ -13,6 +13,9 @@ import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
 import { DataCuacaLengkap, DataKualitasUdara } from "../../types/weather";
 
+// Poin 1: Import fungsi lokasi[cite: 3]
+import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
+
 export default function HalamanUtama() {
   const [teksCari, setTeksCari] = useState("");
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
@@ -21,6 +24,9 @@ export default function HalamanUtama() {
   const [kualitasUdara, setKualitasUdara] = useState<DataKualitasUdara | null>(null);
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
+  
+  // Poin 2: State pesan lokasi[cite: 3]
+  const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
 
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0); // pencegah race condition
@@ -57,11 +63,41 @@ export default function HalamanUtama() {
     }
   }
 
+  // Poin 3: Fungsi gunakanLokasiSaatIni[cite: 3]
+  async function gunakanLokasiSaatIni() {
+    const status = await mintaIzinLokasi();
+
+    if (status === "denied") {
+      setPesanLokasi("Izin lokasi ditolak. Silakan cari kota secara manual di atas.");
+      return;
+    }
+
+    if (status === "unavailable") {
+      setPesanLokasi("Layanan lokasi tidak aktif di perangkat ini. Silakan cari kota secara manual.");
+      return;
+    }
+
+    setPesanLokasi(null);
+    const koordinat = await ambilKoordinatSaatIni();
+    pilihKota({
+      id: -1,
+      name: "Lokasi Saat Ini",
+      latitude: koordinat.latitude,
+      longitude: koordinat.longitude,
+      country: "",
+    });
+  }
+
   return (
     <SafeAreaView 
       edges={["bottom", "left", "right"]}
       style={{ flex: 1, padding: 16, gap: 16 }}>
+      
       <SearchBox onCari={setTeksCari} />
+
+      {/* Poin 4: Tombol & Teks Pesan Lokasi ditaruh tepat di bawah SearchBox */}
+      <Button title="Gunakan Lokasi Saat Ini" onPress={gunakanLokasiSaatIni} />
+      {pesanLokasi && <Text>{pesanLokasi}</Text>}
 
       {hasilPencarian.map((kota) => (
         <TouchableOpacity key={kota.id} onPress={() => pilihKota(kota)}>
@@ -90,7 +126,6 @@ export default function HalamanUtama() {
             indeksAQI={kualitasUdara.indeksAQI}
           />
 
-          {/* NOMOR 1: Menampilkan Suhu Maksimal & Minimal Harian Hari Ini */}
           <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
             <Text style={{ fontSize: 14 }}>
               Suhu Maks: {cuaca.harian.suhuMaksimal[0]}°C
@@ -108,7 +143,6 @@ export default function HalamanUtama() {
         </Text>
       )}
 
-      {/* NOMOR 2: Meneruskan prop PM2.5 dan PM10 ke AtribusiCuaca */}
       <AtribusiCuaca 
         pm25={kualitasUdara?.pm25} 
         pm10={kualitasUdara?.pm10} 
