@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+// src/app/(tabs)/index.tsx
+import { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, ActivityIndicator, Button, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import SearchBox from "../../../components/SearchBox";
 import WeatherCard from "../../../components/WeatherCard";
@@ -15,6 +16,7 @@ import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
 import { DataCuacaLengkap, DataKualitasUdara } from "../../types/weather";
 import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
+import { ambilSemuaFavorit } from "../../services/favoritStorage";
 
 export default function HalamanUtama() {
   const [teksCari, setTeksCari] = useState("");
@@ -25,9 +27,21 @@ export default function HalamanUtama() {
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
+  
+  // State untuk menyimpan daftar ID kota favorit
+  const [daftarFavoritIds, setDaftarFavoritIds] = useState<number[]>([]);
 
   const teksTertunda = useDebounce(teksCari, 500);
   const requestIdRef = useRef(0);
+
+  // Poin 3: Ambil semua kota favorit tiap kali beranda difokuskan
+  useFocusEffect(
+    useCallback(() => {
+      ambilSemuaFavorit().then((favs) => {
+        setDaftarFavoritIds(favs.map((f) => f.id));
+      });
+    }, [])
+  );
 
   useEffect(() => {
     if (teksTertunda.trim().length === 0) {
@@ -85,6 +99,9 @@ export default function HalamanUtama() {
     });
   }
 
+  // Pengecekan apakah kota yang dipilih sudah ada di favorit
+  const sudahFavorit = kotaTerpilih ? daftarFavoritIds.includes(kotaTerpilih.id) : false;
+
   return (
     <SafeAreaView 
       edges={["bottom", "left", "right"]}
@@ -120,8 +137,10 @@ export default function HalamanUtama() {
             suhu={cuaca.saatIni.suhu}
             tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
           />
+          
           <Button
-            title="Tambahkan ke Favorit"
+            title={sudahFavorit ? "Sudah di Favorit" : "Tambahkan ke Favorit"}
+            disabled={sudahFavorit}
             onPress={() =>
               router.push({
                 pathname: "/tambah-favorit",
