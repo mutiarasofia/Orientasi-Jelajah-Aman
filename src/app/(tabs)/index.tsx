@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { View, Text, ActivityIndicator, Button, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+
 import SearchBox from "../../../components/SearchBox";
 import WeatherCard from "../../../components/WeatherCard";
 import AtribusiCuaca from "../../components/AtribusiCuaca";
@@ -12,8 +14,6 @@ import { konversiTingkatAQI } from "../../services/weatherAdapter";
 import { labelKodeCuaca } from "../../constants/weatherCodes";
 import { HasilGeocoding } from "../../types/geocoding";
 import { DataCuacaLengkap, DataKualitasUdara } from "../../types/weather";
-
-// Poin 1: Import fungsi lokasi[cite: 3]
 import { mintaIzinLokasi, ambilKoordinatSaatIni } from "../../services/locationService";
 
 export default function HalamanUtama() {
@@ -24,12 +24,10 @@ export default function HalamanUtama() {
   const [kualitasUdara, setKualitasUdara] = useState<DataKualitasUdara | null>(null);
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
-  
-  // Poin 2: State pesan lokasi[cite: 3]
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
 
   const teksTertunda = useDebounce(teksCari, 500);
-  const requestIdRef = useRef(0); // pencegah race condition
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     if (teksTertunda.trim().length === 0) {
@@ -51,7 +49,7 @@ export default function HalamanUtama() {
         ambilKualitasUdara(kota.latitude, kota.longitude),
       ]);
 
-      if (idSaatIni !== requestIdRef.current) return; // hasil basi, abaikan
+      if (idSaatIni !== requestIdRef.current) return;
 
       setCuaca(dataCuaca);
       setKualitasUdara(dataAQI);
@@ -63,7 +61,6 @@ export default function HalamanUtama() {
     }
   }
 
-  // Poin 3: Fungsi gunakanLokasiSaatIni[cite: 3]
   async function gunakanLokasiSaatIni() {
     const status = await mintaIzinLokasi();
 
@@ -95,7 +92,6 @@ export default function HalamanUtama() {
       
       <SearchBox onCari={setTeksCari} />
 
-      {/* Poin 4: Tombol & Teks Pesan Lokasi ditaruh tepat di bawah SearchBox */}
       <Button title="Gunakan Lokasi Saat Ini" onPress={gunakanLokasiSaatIni} />
       {pesanLokasi && <Text>{pesanLokasi}</Text>}
 
@@ -123,7 +119,20 @@ export default function HalamanUtama() {
             kota={kotaTerpilih.name}
             suhu={cuaca.saatIni.suhu}
             tingkatAQI={konversiTingkatAQI(kualitasUdara.indeksAQI)}
-            indeksAQI={kualitasUdara.indeksAQI}
+          />
+          <Button
+            title="Tambahkan ke Favorit"
+            onPress={() =>
+              router.push({
+                pathname: "/tambah-favorit",
+                params: {
+                  id: String(kotaTerpilih.id),
+                  nama: kotaTerpilih.name,
+                  lat: String(kotaTerpilih.latitude),
+                  lon: String(kotaTerpilih.longitude),
+                },
+              })
+            }
           />
 
           <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4 }}>
