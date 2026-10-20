@@ -1,6 +1,6 @@
 // src/services/cacheRepository.ts
 import { ambilDatabase } from "../db/database";
-import { DataCuacaLengkap, DataKualitasUdara } from "../../types/weather";
+import { DataCuacaLengkap, DataKualitasUdara } from "../../src/types/weather";
 import {
   DataTersimpan,
   KotaUntukCache,
