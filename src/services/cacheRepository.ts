@@ -5,7 +5,7 @@ import {
   DataTersimpan,
   KotaUntukCache,
   RingkasanKotaTersimpan,
-} from "../../types/cache";
+} from "../../src/types/cache";
 
 interface BarisCache {
   kunci: string;
