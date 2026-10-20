@@ -1,6 +1,6 @@
 // src/app/(tabs)/riwayat.tsx
 import { useState, useCallback } from "react";
-import { View, Text, Button, Alert } from "react-native";
+import { View, Text, Button, Alert, Platform } from "react-native"; // 1. Tambahkan Platform di sini
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -16,22 +16,34 @@ export default function TabRiwayat() {
     }, [])
   );
 
+  // 2. Fungsi konfirmasi yang mendukung Android, iOS, dan Web (Laptop)
   function konfirmasiHapus(kota: KotaFavorit) {
-    Alert.alert(
-      "Konfirmasi Hapus",
-      `Yakin hapus ${kota.nama}?`,
-      [
-        { text: "Batal", style: "cancel" },
-        {
-          text: "Hapus",
-          style: "destructive",
-          onPress: async () => {
-            await hapusFavorit(kota.id);
-            setDaftarFavorit((prev) => prev.filter((k) => k.id !== kota.id));
+    if (Platform.OS === "web") {
+      // Pop-up browser bawaan laptop
+      const yakin = window.confirm(`Yakin hapus ${kota.nama}?`);
+      if (yakin) {
+        prosesHapus(kota.id);
+      }
+    } else {
+      // Pop-up Alert bawaan HP (Android/iOS)
+      Alert.alert(
+        "Konfirmasi Hapus",
+        `Yakin hapus ${kota.nama}?`,
+        [
+          { text: "Batal", style: "cancel" },
+          {
+            text: "Hapus",
+            style: "destructive",
+            onPress: () => prosesHapus(kota.id),
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
+  }
+
+  async function prosesHapus(id: number) {
+    await hapusFavorit(id);
+    setDaftarFavorit((prev) => prev.filter((k) => k.id !== id));
   }
 
   return (
