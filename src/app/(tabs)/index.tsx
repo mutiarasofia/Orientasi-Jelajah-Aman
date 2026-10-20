@@ -124,7 +124,10 @@ export default function HalamanUtama() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView
+      edges={["bottom", "left", "right"]}
+      style={{ flex: 1 }}
+    >
       <ScrollView
         contentContainerStyle={{ padding: 16, gap: 16 }}
         keyboardShouldPersistTaps="handled"
@@ -183,12 +186,14 @@ export default function HalamanUtama() {
             />
             <WeatherCard
               kota={kotaTerpilih.name}
-              suhu={hasil.cuaca.saatIni.suhu}
-              tingkatAQI={konversiTingkatAQI(hasil.kualitasUdara.indeksAQI)}
+              suhu={hasil.cuaca?.saatIni?.suhu ?? 0}
+              tingkatAQI={konversiTingkatAQI(
+                hasil.kualitasUdara?.indeksAQI ?? 0
+              )}
             />
             <Text style={{ fontSize: 12, color: "#888888" }}>
-              Kondisi: {labelKodeCuaca(hasil.cuaca.saatIni.kodeCuaca)}{" "}
-              {"\u2022"} Angin {hasil.cuaca.saatIni.kecepatanAngin} km/j
+              Kondisi: {labelKodeCuaca(hasil.cuaca?.saatIni?.kodeCuaca ?? 0)}{" "}
+              {"\u2022"} Angin {hasil.cuaca?.saatIni?.kecepatanAngin ?? 0} km/j
             </Text>
             <Button
               title="Perbarui Sekarang"

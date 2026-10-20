@@ -1,7 +1,8 @@
+// src/services/weatherService.ts
 import { DataCuacaLengkap } from "../types/weather";
 
 const BASE_URL = "https://api.open-meteo.com/v1/forecast";
-const BATAS_WAKTU_MS = 3000; // Nomor 3: Diubah menjadi 3000 (3 detik)
+const BATAS_WAKTU_MS = 3000;
 
 export async function ambilCuaca(
   latitude: number,
@@ -24,7 +25,7 @@ export async function ambilCuaca(
 
     const data = await response.json();
 
-    return {
+    const dataCuacaFormat: DataCuacaLengkap = {
       saatIni: {
         suhu: data.current.temperature_2m,
         kodeCuaca: data.current.weather_code,
@@ -38,11 +39,8 @@ export async function ambilCuaca(
         kodeCuaca: data.daily.weather_code,
       },
     };
-  } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") {
-      throw new Error("Permintaan cuaca melebihi batas waktu, coba lagi");
-    }
-    throw err;
+
+    return dataCuacaFormat;
   } finally {
     clearTimeout(timer);
   }

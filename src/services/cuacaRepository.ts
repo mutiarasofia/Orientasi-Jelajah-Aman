@@ -3,7 +3,6 @@ import { ambilCuaca } from "./weatherService";
 import { ambilKualitasUdara } from "./airQualityService";
 import { ambilCache, simpanCache } from "./cacheRepository";
 import { HasilCuacaOffline, KotaUntukCache } from "../types/cache";
-import { DataCuacaLengkap, DataKualitasUdara } from "../types/weather";
 
 export const TTL_SEGAR_MS = 30 * 60 * 1000; // 30 menit
 export const BATAS_CACHE_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
@@ -19,7 +18,7 @@ export async function ambilCuacaOfflineFirst(
   const cache = await ambilCache(kota.latitude, kota.longitude);
   const umur = cache ? Date.now() - cache.disimpanPada : Infinity;
 
-  // 1. Cache masih segar -> pakai langsung, tanpa memanggil internet
+  // 1. Cache masih segar -> pakai langsung
   if (cache && umur < TTL_SEGAR_MS && !opsi.paksaPerbarui) {
     return { ...cache, sumber: "cache-segar" };
   }
@@ -30,20 +29,19 @@ export async function ambilCuacaOfflineFirst(
     ambilKualitasUdara(kota.latitude, kota.longitude),
   ]).catch(() => null);
 
-  // 3. Internet gagal -> pakai cache lama jika ada, kalau tidak: menyerah
+  // 3. Internet gagal -> pakai cache lama jika ada
   if (!dariJaringan) {
     if (cache) return { ...cache, sumber: "cache-basi" };
     throw new Error("Tidak ada koneksi dan belum ada data tersimpan");
   }
 
-  // 4. Internet berhasil -> data baru menimpa cache
-  const cuaca = dariJaringan[0] as unknown as DataCuacaLengkap;
-  const kualitasUdara = dariJaringan[1] as unknown as DataKualitasUdara;
+  // 4. Internet berhasil -> simpan & tampilkan
+  const [cuaca, kualitasUdara] = dariJaringan;
 
   try {
     await simpanCache(kota, cuaca, kualitasUdara);
   } catch {
-    // Gagal menyimpan cache tidak boleh merusak tampilan data yang sudah ada
+    // Abaikan gagal simpan cache
   }
 
   return { cuaca, kualitasUdara, disimpanPada: Date.now(), sumber: "jaringan" };
